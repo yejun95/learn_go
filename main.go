@@ -3,14 +3,20 @@ package main
 import "fmt"
 
 func canIDrink(age int) bool {
-	if koreanAge := age + 2; koreanAge < 18 {
+	switch koreanAge := age + 2; koreanAge {
+	case 18:
+		return true
+	case 10:
 		return false
+	case 20:
+		return true
+	case 50:
+		return true
 	}
 
-	return true
+	return false
 }
 
 func main() {
-	boolTest := canIDrink(16)
-	fmt.Println(boolTest)
+	fmt.Println(canIDrink(18))
 }
