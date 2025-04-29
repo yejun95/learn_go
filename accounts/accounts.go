@@ -1,10 +1,14 @@
 package accounts
 
+import "errors"
+
 // Account struct
 type Account struct {
 	owner   string
 	balance int
 }
+
+var errNoMoney = errors.New("can't withdraw")
 
 // NewAccount creates Account
 // 객체를 복사하지 않고 원본 객체를 반환
@@ -25,6 +29,10 @@ func (a Account) Balance() int {
 }
 
 // Withdarw x
-func (a *Account) Withdraw(amount int) {
+func (a *Account) Withdraw(amount int) error {
+	if a.balance < amount {
+		return errNoMoney
+	}
 	a.balance -= amount
+	return nil
 }
