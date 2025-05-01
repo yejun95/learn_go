@@ -1,56 +1,33 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"learn_go/mydict"
+	"net/http"
 )
 
+var errRequestFailed = errors.New("Request failed")
+
 func main() {
-	/* 생성자 */
-	dictionary := mydict.Dictionary{"first": "First word"}
-	//definition, err := dictionary.Search("first")
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//fmt.Println(definition)
-
-	/* Add */
-	//word := "hello"
-	//definition := "Greeting"
-	//
-	//err := dictionary.Add(word, definition)
-	//if err != nil {
-	//	log.Println(err)
-	//}
-	//hello, err := dictionary.Search(word)
-	//fmt.Println(hello)
-	//
-	//// 중복 검사가 잘 되는지 확인
-	//err2 := dictionary.Add(word, definition)
-	//if err2 != nil {
-	//	log.Println(err2)
-	//}
-
-	/* Update */
-	//baseWord := "hello"
-	//dictionary.Add(baseWord, "First")
-	//err := dictionary.Update(baseWord, "Second")
-	//if err != nil {
-	//	log.Println(err)
-	//}
-	//
-	//word, _ := dictionary.Search(baseWord)
-	//fmt.Println(word)
-
-	/* Delete */
-	baseWord := "hello"
-	dictionary.Add(baseWord, "First")
-	dictionary.Search(baseWord)
-	dictionary.Delete(baseWord)
-	word, err := dictionary.Search(baseWord)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println(word)
+	urls := []string{
+		"https://www.airbnb.com/",
+		"https://www.google.com/",
+		"https://www.amazon.com/",
+		"https://www.reddit.com/",
+		"https://www.soundcloud.com/",
+		"https://www.facebook.com/",
 	}
+	for _, url := range urls {
+		fmt.Println("Checking:", url)
+		hitURL(url)
+	}
+}
+
+func hitURL(url string) error {
+	resp, err := http.Get(url)
+	if err == nil || resp.StatusCode >= 400 {
+		return errRequestFailed
+	}
+
+	return nil
 }
