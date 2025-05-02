@@ -1,26 +1,52 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"time"
+	"net/http"
 )
 
-func main() {
-
-	c := make(chan string)
-	people := [5]string{"cola", "yellow", "green", "blue", "brown"}
-
-	for _, person := range people {
-		go send(person, c)
-	}
-
-	for i := 0; i < len(people); i++ {
-		fmt.Println(<-c)
-	}
-
+type resultRequest struct {
+	url    string
+	status string
 }
 
-func send(person string, c chan string) {
-	time.Sleep(time.Second * 5)
-	c <- person + " is good"
+var errRequestFailed = errors.New("Request failed")
+
+func main() {
+	results := make(map[string]string)
+	c := make(chan resultRequest)
+
+	urls := []string{
+		"https://www.airbnb.com/",
+		"https://www.google.com/",
+		"https://www.amazon.com/",
+		"https://www.reddit.com/",
+		"https://www.soundcloud.com/",
+		"https://www.facebook.com/",
+		"https://www.naverr.com/",
+	}
+
+	for _, url := range urls {
+		go hitURL(url, c)
+	}
+
+	for i := 0; i < len(urls); i++ {
+		result := <-c
+		results[result.url] = result.status
+	}
+
+	for url, status := range results {
+		fmt.Println(url, status)
+	}
+}
+
+// c chan<- : 메시지를 보낼 수만 있다 선언
+func hitURL(url string, c chan<- resultRequest) {
+	resp, err := http.Get(url)
+	status := "OK"
+	if err != nil || resp.StatusCode >= 400 {
+		status = "FAILED"
+	}
+	c <- resultRequest{url: url, status: status}
 }
