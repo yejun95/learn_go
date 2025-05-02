@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -17,7 +19,7 @@ type extractedJob struct {
 }
 
 var baseURL string = "https://www.saramin.co.kr/zf_user/search/recruit?&searchword=backend"
-var baseDetailURL string = "https://www.saramin.co.kr/zf_user/jobs/relay/view?isMypage=no"
+var baseDetailURL string = "https://www.saramin.co.kr/zf_user/jobs/relay/view?isMypage=no&rec_idx="
 
 func main() {
 	var jobs []extractedJob
@@ -25,10 +27,34 @@ func main() {
 	fmt.Println("totalPages :", totalPages)
 
 	for i := 1; i <= totalPages; i++ {
-		extractedJobs := getPage(i)
+		extractedJobs := getPage(i)           // 페이지별 공고가 담김
 		jobs = append(jobs, extractedJobs...) // 배열의 콘텐츠를 모아 다시 배열로 묶음 -> [] + [] + [] + [] = []
 	}
-	fmt.Println(jobs)
+	writeJobs(jobs)
+	fmt.Println("Done, extracted :", len(jobs))
+}
+
+func writeJobs(jobs []extractedJob) {
+	file, err := os.Create("jobs.csv")
+	checkErr(err)
+
+	// Excel에서 인식 가능한 UTF-8 with BOM 추가
+	file.Write([]byte{0xEF, 0xBB, 0xBF})
+
+	w := csv.NewWriter(file)
+	defer w.Flush() // 함수가 끝나는 시점에 파일에 데이터를 입력하는 함수
+
+	headers := []string{"Link", "Badge", "Title", "Corporation"}
+
+	wErr := w.Write(headers)
+	checkErr(wErr)
+
+	// loop가 끝나면 defer 함수 실행을 통해 데이터가 파일에 입력
+	for _, job := range jobs {
+		jobSlice := []string{baseDetailURL + job.id, job.badge, job.title, job.corporation}
+		jwErr := w.Write(jobSlice)
+		checkErr(jwErr)
+	}
 }
 
 func getPage(page int) []extractedJob {
@@ -53,7 +79,6 @@ func getPage(page int) []extractedJob {
 }
 
 func extractJob(card *goquery.Selection) extractedJob {
-	//detailURL := baseDetailURL + "&rec_idx=" + id
 	id, _ := card.Attr("value")
 	badge := cleanString(card.Find(".area_badge>span").Text())
 	title := cleanString(card.Find(".job_tit>a").Text())
